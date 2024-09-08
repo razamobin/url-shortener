@@ -9,6 +9,7 @@ import (
 
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"net/url"
@@ -19,6 +20,7 @@ import (
 
 	"net"
 
+	"github.com/btcsuite/btcutil/base58"
 	"github.com/gorilla/mux"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -27,12 +29,10 @@ var db *sql.DB
 var tpl *template.Template
 var useHTTPS bool
 
-const base62Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-
 const (
 	serverPort  = 8080
 	shutdownPort = 8081
-	idOffset     = 12345678 // You can adjust this value as needed
+	idOffset     = 12345678
 )
 
 func init() {
@@ -225,20 +225,21 @@ func generateTempCode() (string, error) {
 }
 
 func generateShortCode(id int64) string {
-	// Add the offset to the id
-	id += idOffset
+	idWithOffset := uint64(id + idOffset)
+	bytes := make([]byte, 8)
+	binary.BigEndian.PutUint64(bytes, idWithOffset)
 
-	if id == idOffset {
-		return string(base62Chars[0])
+	// Find first non-zero byte
+	start := 0
+	for i, b := range bytes {
+		if b != 0 {
+			start = i
+			break
+		}
 	}
 
-	var encoded string
-	for id > 0 {
-		encoded = string(base62Chars[id%62]) + encoded
-		id /= 62
-	}
-
-	return encoded
+	// Encode only significant bytes
+	return base58.Encode(bytes[start:])
 }
 
 func redirectHandler(w http.ResponseWriter, r *http.Request) {
