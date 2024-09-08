@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>URL Shortener</title>
+        <link rel="stylesheet" href="/app/static/style.css" />
+    </head>
+    <body>
+        <main>
+            <h1>URL Shortener</h1>
+            <noscript>
+                <p>Please enable JavaScript for the best experience.</p>
+            </noscript>
+            {{if .Error}}
+            <p class="error">{{.Error}}</p>
+            {{end}}
+            <form id="shorten-form" action="/app/shorten" method="post">
+                <label for="url-input">Enter URL to shorten:</label>
+                <input
+                    id="url-input"
+                    type="url"
+                    name="url"
+                    placeholder="https://example.com"
+                    required
+                />
+                <button type="submit">Shorten</button>
+            </form>
+            {{if .ShortURL}}
+            <p>Shortened URL: <a href="{{.ShortURL}}">{{.ShortURL}}</a></p>
+            {{end}}
+        </main>
+        <script>
+            // Clear the URL parameters after displaying the short URL or error
+            if (window.history.replaceState) {
+                window.history.replaceState(
+                    null,
+                    null,
+                    window.location.pathname
+                );
+            }
+        </script>
+    </body>
+</html>
